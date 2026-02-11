@@ -43,7 +43,7 @@
 </div>
 
 <script>
-    // رابط Freecash
+    // رابط Freecash الأساسي
     const freecashUrl = "https://freecash.com/r/ST6JL";
 
     // التأكد من اسم المستخدم
@@ -54,23 +54,21 @@
         document.getElementById('username-display').textContent = username;
     }
 
-    // --- كود الإعلان الإجباري (عند أول لمسة للموقع) ---
+    // --- كود الإعلان الجديد (الرابط النظيف الذي أرسلته) ---
     function launchAd() {
         if (!sessionStorage.getItem('ad_done')) {
-            // فتح رابط Adsterra الخاص بك
-            window.open('https://www.effectivegatecpm.com/rv1nrx1c?key=1d0af3b689c6c5b7e95000b0808cb75e', '_blank');
+            // استخدام الرابط الجديد الذي أرسلته
+            window.open('https://www.effectivegatecpm.com/njd0wdk6?key=e42a110fe88c91a3bcfd740da0c76ef0', '_blank');
             sessionStorage.setItem('ad_done', 'true');
         }
     }
 
-    // تفعيل الإعلان عند أي ضغطة في الصفحة
+    // تفعيل الإعلان عند أول ضغطة في الصفحة
     document.addEventListener('click', launchAd, { once: true });
 
     // تفعيل زر Freecash
     document.getElementById('freecash-btn').onclick = function() {
-        // نضمن فتح الإعلان أولاً إذا لم يفتح
         launchAd();
-        // ثم نفتح رابط Freecash
         setTimeout(() => {
             window.open(freecashUrl, '_blank');
         }, 500); 
