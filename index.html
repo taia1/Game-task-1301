@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مركز الروابط والمكافآت</title>
+    <title>Game Task - Freecash</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #121212; color: #E0E0E0; margin:0; padding:0; text-align:center;}
         .container { max-width:600px; margin:50px auto; padding:30px; background-color:#1E1E1E; border-radius:15px; box-shadow:0 4px 25px rgba(0,0,0,0.7);}
@@ -21,8 +21,9 @@
             font-size: 1.4em; 
             font-weight: bold; 
             text-decoration: none;
-            transition: background-color 0.3s;
+            transition: transform 0.2s;
         }
+        .link-button:active { transform: scale(0.95); }
         .logout-btn { background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
@@ -36,18 +37,16 @@
         <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
     </div>
 
-    <h2>اضغط للبدء في Freecash:</h2>
+    <h2>ابدأ الكسب الآن:</h2>
     
     <button class="link-button" id="freecash-btn">دخول إلى Freecash</button>
 </div>
 
 <script>
-    // 1. رابط Freecash فقط
-    const affiliateLinks = {
-        freecash: "https://freecash.com/r/ST6JL"
-    };
+    // رابط Freecash
+    const freecashUrl = "https://freecash.com/r/ST6JL";
 
-    // 2. التحقق من الدخول
+    // التأكد من اسم المستخدم
     const username = localStorage.getItem('username');
     if (!username) {
         window.location.href = 'login.html'; 
@@ -55,17 +54,26 @@
         document.getElementById('username-display').textContent = username;
     }
 
-    // 3. كود الإعلان (يفتح عند أول ضغطة في أي مكان)
-    document.addEventListener('click', function() {
-        if (!sessionStorage.getItem('ad_opened')) {
+    // --- كود الإعلان الإجباري (عند أول لمسة للموقع) ---
+    function launchAd() {
+        if (!sessionStorage.getItem('ad_done')) {
+            // فتح رابط Adsterra الخاص بك
             window.open('https://www.effectivegatecpm.com/rv1nrx1c?key=1d0af3b689c6c5b7e95000b0808cb75e', '_blank');
-            sessionStorage.setItem('ad_opened', 'true');
+            sessionStorage.setItem('ad_done', 'true');
         }
-    }, { once: true });
+    }
 
-    // 4. تشغيل زر Freecash
+    // تفعيل الإعلان عند أي ضغطة في الصفحة
+    document.addEventListener('click', launchAd, { once: true });
+
+    // تفعيل زر Freecash
     document.getElementById('freecash-btn').onclick = function() {
-        window.open(affiliateLinks.freecash, '_blank');
+        // نضمن فتح الإعلان أولاً إذا لم يفتح
+        launchAd();
+        // ثم نفتح رابط Freecash
+        setTimeout(() => {
+            window.open(freecashUrl, '_blank');
+        }, 500); 
     };
 
     function logout() {
