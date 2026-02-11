@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <title>تسجيل الدخول المبسط</title>
+    </head>
+<body>
+
+<div class="login-container">
+    <h2>تسجيل الدخول</h2>
+    
+    <input type="text" id="usernameInput" placeholder="أدخل اسم المستخدم (Username)" required> 
+    
+    <button id="login-btn">تسجيل الدخول</button>
+    
+    <p id="message" style="color: red;"></p>
+    
+    <p class="switch-mode" id="switch-link">هذا النظام لا يتطلب كلمة مرور</p>
+</div>
+
+<script>
+    const usernameInput = document.getElementById('usernameInput');
+    const loginBtn = document.getElementById('login-btn');
+    const messageDisplay = document.getElementById('message');
+    
+    // ** 1. التحقق من الدخول مسبقاً **
+    // إذا كان الاسم موجوداً، يتم التوجيه مباشرة إلى الصفحة الرئيسية
+    if (localStorage.getItem('username')) {
+        window.location.href = 'index.html'; 
+    }
+
+    // ** 2. وظيفة تسجيل الدخول (المبسطة) **
+    loginBtn.addEventListener('click', () => {
+        const username = usernameInput.value.trim();
+
+        if (username.length < 3) {
+            messageDisplay.textContent = 'الرجاء إدخال اسم مستخدم أطول من حرفين.';
+            return;
+        }
+
+        // حفظ الاسم في الذاكرة المؤقتة (LocalStorage)
+        localStorage.setItem('username', username);
+        
+        // التوجيه إلى الصفحة التالية (index.html في ملفاتك)
+        window.location.href = 'index.html';
+    });
+
+    // لتبسيط العملية: يمكن للمستخدم الضغط على Enter
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            loginBtn.click();
+        }
+    });
+</script>
+
+</body>
+</html>

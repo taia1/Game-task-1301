@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المسؤول - GameTask</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a2e; color: #E0E0E0; margin:0; padding:20px; text-align:right;}
+        .container { max-width: 550px; margin: 50px auto; padding: 30px; background-color: #162447; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.7);}
+        h1 { color: #e94560; border-bottom: 3px solid #e94560; padding-bottom: 15px; margin-bottom: 30px; text-align: center;}
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #a9a9b9;}
+        input[type="text"], input[type="password"] { 
+            width: 100%; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border-radius: 8px; 
+            border: 1px solid #3d4a6a; 
+            background-color: #2c395c; 
+            color: #FFFFFF; 
+            box-sizing: border-box; 
+            font-size: 16px;
+            text-align: right;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #e94560;
+            outline: none;
+        }
+        .actions { display: flex; justify-content: flex-start; margin-bottom: 20px;}
+        button { 
+            background-color: #53a3eb; 
+            color: white; 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px;
+            margin-left: 15px; 
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover { background-color: #3b8fe7;}
+        button:active { transform: scale(0.98);}
+        button:disabled { background-color: #4a4a50; cursor: not-allowed;}
+        
+        #reset-btn { background-color: #e94560; margin-top: 20px; width: 100%;}
+        #reset-btn:hover { background-color: #c93751;}
+        
+        .result-box { 
+            background-color: #1a1a2e; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-top: 25px;
+            border-left: 5px solid #53a3eb;
+        }
+        .result-box p { margin: 10px 0; font-size: 1.1em;}
+        .result-box strong { color: #e94560;}
+        .success { color: #00FF7F; font-weight: bold; text-align: center;}
+        .error { color: #FF6347; font-weight: bold; text-align: center;}
+        
+        /* تصميم شاشة القفل */
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1a1a2e; display: flex; justify-content: center; align-items: center;
+            z-index: 1000; flex-direction: column;
+        }
+        #auth-box {
+            background-color: #162447; padding: 40px; border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen">
+    <div id="auth-box">
+        <h1>الوصول للوحة الإدارة</h1>
+        <label for="password-input">الرجاء إدخال كلمة المرور:</label>
+        <input type="password" id="password-input" placeholder="كلمة المرور">
+        <button id="login-btn">دخول</button>
+        <p id="auth-message" class="error"></p>
+    </div>
+</div>
+<div class="container" id="admin-panel-content" style="display:none;">
+    <h1>لوحة تحكم المسؤول</h1>
+    <label for="username">ابحث باسم المستخدم أو ID المستخدم:</label>
+    <input type="text" id="username" placeholder="أدخل الاسم أو ID (مثال: ID101)">
+    
+    <div class="actions">
+        <button id="search-btn">بحث عن المستخدم</button>
+    </div>
+    
+    <div class="result-box" id="result-display" style="display:none;">
+        <p><strong>الاسم:</strong> <span id="display-name"></span></p>
+        <p><strong>الرصيد المتاح:</strong> <span id="display-balance" style="color:#53a3eb;"></span></p>
+        <p><strong>ID المستخدم:</strong> <span id="display-id" style="font-family: monospace;"></span></p>
+        
+        <button id="reset-btn" disabled>تصفير العداد</button>
+    </div>
+    
+    <p id="message-area" class="error" style="margin-top: 15px;"></p>
+</div>
+
+<script>
+    // ** كلمة المرور الإدارية **
+    const ADMIN_PASSWORD = '717767218'; 
+    // ** رابط الـ API النهائي الخاص بك (تم تضمينه هنا) **
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxoEAPe4wsF79Os22or2QZyeqp0nh17loMQdt4CUiqzQqZPx7GWT7Unq-fqbuG11y3AAg/exec';
+    
+    const usernameInput = document.getElementById('username');
+    const searchBtn = document.getElementById('search-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const resultDisplay = document.getElementById('result-display');
+    const messageArea = document.getElementById('message-area');
+
+    const authScreen = document.getElementById('auth-screen');
+    const passwordInput = document.getElementById('password-input');
+    const loginBtn = document.getElementById('login-btn');
+    const authMessage = document.getElementById('auth-message');
+    const adminPanelContent = document.getElementById('admin-panel-content');
+
+
+    // ********** وظائف الحماية **********
+    loginBtn.addEventListener('click', () => {
+        if (passwordInput.value === ADMIN_PASSWORD) {
+            authScreen.style.display = 'none'; // إخفاء شاشة القفل
+            adminPanelContent.style.display = 'block'; // إظهار المحتوى
+        } else {
+            authMessage.textContent = 'كلمة المرور غير صحيحة. حاول مرة أخرى.';
+            passwordInput.value = '';
+        }
+    });
+
+    // ********** وظائف لوحة التحكم **********
+    searchBtn.addEventListener('click', findUser);
+    resetBtn.addEventListener('click', resetBalance);
+
+    // دالة البحث عن المستخدم (الذكية)
+    async function findUser() {
+        // ... (باقي دالة findUser كما أرسلتها سابقاً) ...
+        const input = usernameInput.value.trim();
+        if (!input) {
+            messageArea.textContent = 'الرجاء إدخال اسم المستخدم أو ID.';
+            resultDisplay.style.display = 'none';
+            return;
+        }
+
+        messageArea.textContent = 'جاري البحث...';
+        messageArea.className = '';
+        resetBtn.disabled = true;
+
+        let url;
+        let actionUsed;
+        
+        if (input.toUpperCase().startsWith('ID')) {
+            url = `${API_URL}?action=findUserByID&id=${encodeURIComponent(input)}`;
+            actionUsed = 'findUserByID';
+        } else {
+            url = `${API_URL}?action=findUser&name=${encodeURIComponent(input)}`;
+            actionUsed = 'findUser';
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                document.getElementById('display-name').textContent = data.Username;
+                document.getElementById('display-balance').textContent = data.Balance + ' $';
+                document.getElementById('display-id').textContent = data.ID;
+                
+                resultDisplay.style.display = 'block';
+                resetBtn.disabled = false;
+                messageArea.textContent = `تم العثور على المستخدم بنجاح. (تم البحث عبر ${actionUsed === 'findUserByID' ? 'الـ ID' : 'الاسم'}).`;
+                messageArea.className = 'success';
+            } else {
+                resultDisplay.style.display = 'none';
+                messageArea.textContent = data.message || 'خطأ: لم يتم العثور على المستخدم أو خطأ في الاتصال.';
+                messageArea.className = 'error';
+            }
+        } catch (error) {
+            console.error('Error finding user:', error);
+            resultDisplay.style.display = 'none';
+            messageArea.textContent = 'خطأ في الاتصال بالخادم. تحقق من رابط API.';
+            messageArea.className = 'error';
+        }
+    }
+    
+    // دالة تصفير النقاط
+    async function resetBalance() {
+        // ... (باقي دالة resetBalance كما أرسلتها سابقاً) ...
+        const username = document.getElementById('display-name').textContent.trim();
+        const id = document.getElementById('display-id').textContent.trim();
+
+        if (!username) {
+             messageArea.textContent = 'يجب البحث عن مستخدم أولاً.';
+             messageArea.className = 'error';
+             return;
+        }
+
+        if (!confirm(`تحذير: هل أنت متأكد من تصفير رصيد المستخدم ${username} (ID: ${id}) إلى صفر؟`)) {
+            return;
+        }
+
+        messageArea.textContent = 'جاري تصفير النقاط...';
+        messageArea.className = '';
+        resetBtn.disabled = true;
+        
+        const url = `${API_URL}?action=resetBalance&name=${encodeURIComponent(username)}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                messageArea.textContent = data.message;
+                messageArea.className = 'success';
+                usernameInput.value = id; 
+                findUser(); 
+            } else {
+                messageArea.textContent = data.message || 'خطأ في تصفير النقاط.';
+                messageArea.className = 'error';
+                resetBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error resetting balance:', error);
+            messageArea.textContent = 'خطأ في الاتصال بالخادم أثناء التصفير.';
+            messageArea.className = 'error';
+            resetBtn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
